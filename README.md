@@ -8,3 +8,8 @@ PWA (iPhone + Android) care evalueaza, la alegere, machiajul si coafura, tinuta 
 - Pozele nu sunt salvate.
 
 Scor tinuta: colorit 25%, ocazie 25%, accesorii 15%, incaltaminte 15%, croiala 10%, obiectiv 10%. Scor machiaj si coafura: baza 20%, ochi 15%, buze si obraji 10%, armonie 15%, coafura 25%, ocazie 15%. Criteriile nevizibile se exclud si ponderile se renormalizeaza; la "Ambele", scorul general = media celor doua.
+
+## Functii noi
+- Recomandari: pana la 5, fiecare produs cu cate un magazin pe nivel de pret (accesibil / mediu / premium); nivelul de buget ales apare primul. Clasificarea magazinelor pe niveluri e orientativa.
+- Imaginea refacuta: `netlify/functions/imagine.mts` -> `/api/imagine`, model Gemini de editare prin Netlify AI Gateway (variabila `IMAGE_MODEL`, implicit `gemini-3.1-flash-image`). Rate limit 4/minut/IP.
+- Raport PDF generat pe telefon (jsPDF, `public/vendor/jspdf.umd.min.js`), cu optiune de partajare pe mobil.

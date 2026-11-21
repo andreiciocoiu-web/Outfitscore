@@ -7,12 +7,19 @@ const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const MAX_TOTAL_BASE64 = 5_500_000; // limita de payload Netlify este 6 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-const FASHION_STORES = [
-  "Zara", "H&M", "Reserved", "Mango", "Massimo Dutti", "Bershka", "Pull&Bear", "Stradivarius",
-  "Sinsay", "LC Waikiki", "Answear", "eMAG", "CCC", "Deichmann", "Benvenuti", "Musette",
-];
-// Retaileri de cosmetice / ingrijire par cu prezenta in Romania (lista curatoriata, de validat periodic)
-const BEAUTY_STORES = ["Sephora", "Douglas", "Notino", "dm", "eMAG", "Farmec", "H&M", "Zara", "Sinsay"];
+// Retaileri cu prezenta in Romania, grupati pe nivel de pret (clasificare orientativa, de validat periodic).
+const FASHION_TIERS = {
+  accesibil: ["Sinsay", "LC Waikiki", "H&M", "CCC", "Deichmann", "eMAG"],
+  mediu: ["Zara", "Mango", "Reserved", "Bershka", "Pull&Bear", "Stradivarius", "Answear"],
+  premium: ["Massimo Dutti", "Benvenuti", "Musette", "Answear (branduri premium)"],
+};
+const BEAUTY_TIERS = {
+  accesibil: ["dm", "Farmec", "eMAG", "Sinsay", "H&M"],
+  mediu: ["Notino", "Douglas", "Sephora (marca proprie)", "Zara"],
+  premium: ["Sephora", "Douglas", "Notino (branduri premium)"],
+};
+const tiersText = (t: Record<string, string[]>) =>
+  Object.entries(t).map(([k, v]) => `  - ${k}: ${v.join(", ")}`).join("\n");
 
 type Dict = Record<string, string>;
 
@@ -40,7 +47,8 @@ REGULI GENERALE:
 - Evalueaza DOAR ce se vede in poze. Nu inventa. Daca un criteriu nu se poate evalua din poze, pune "vizibil": false si "scor": null.
 - Note de la 0 la 10, cu justificare concreta (ce anume vezi). Fii onest si exigent: 9-10 doar pentru rezultate exceptionale pentru context. Nu umfla scorurile.
 - NU comenta corpul, greutatea, trasaturile fetei, tenul ca atribut fizic, varsta, etnia sau atractivitatea persoanei. NU pune diagnostice si nu comenta afectiuni ale pielii. Evaluezi exclusiv alegerile de stil si executia lor.
-- Propune maxim 3 variante de imbunatatire, ordonate de la cea mai mare crestere de scor. Fiecare varianta schimba sau adauga 1-3 elemente concrete.
+- Propune intre 4 si 5 variante de imbunatatire distincte (nu repeta aceeasi idee), ordonate de la cea mai mare crestere de scor. Fiecare varianta schimba sau adauga 1-3 elemente concrete. Daca rezultatul este deja excelent, poti propune mai putine.
+- Pentru fiecare produs propus completeaza "magazine" cu cate UN magazin pentru fiecare nivel de pret (accesibil, mediu, premium), ales DOAR din lista nivelului respectiv si potrivit tipului de produs; pune "" daca niciun magazin din nivel nu se potriveste. Nu inventa preturi.
 - "scor_estimat" = scorul total estimat (0-100) al acestei evaluari daca se aplica varianta; realist si mai mare decat scorul actual.
 - Daca in poze nu apare o persoana sau evaluarea nu se poate face, raspunde doar cu {"eroare":"motivul"}.
 - Scrie totul in limba romana FARA diacritice.
@@ -60,7 +68,9 @@ REGULI SPECIFICE TINUTEI:
 - Daca incaltamintea nu se vede: incaltaminte.vizibil=false, scor=null. La fel accesorii daca nu se pot evalua (daca persoana clar nu poarta accesorii, e evaluabil in functie de ocazie).
 - "ocazie" = potrivirea cu ocazia si dress code-ul (ex: alb la nunta pentru invitata = penalizare majora; prea casual la interviu = penalizare).
 - "obiectiv" = cat raspunde tinuta dorintei de a iesi sau nu in evidenta.
-- Pentru fiecare piesa propusa indica UN magazin DOAR din lista: ${FASHION_STORES.join(", ")}. Tine cont de buget si sectiune. "cautare" = 2-5 cuvinte in romana.
+- Magazine pe niveluri de pret:
+${tiersText(FASHION_TIERS)}
+- Bugetul utilizatorului este "${v(t.buget, "mediu")}": alege produse realiste pentru acest buget; tine cont si de sectiune. "cautare" = 2-5 cuvinte in romana.
 
 STRUCTURA JSON:
 {
@@ -78,7 +88,7 @@ STRUCTURA JSON:
  "verdict": "o fraza scurta, directa",
  "limitari_analiza": "ce nu s-a putut evalua sau sir gol",
  "variante": [{"titlu":"...", "ce_schimbi":"...", "de_ce":"...", "scor_estimat": 0-100,
-   "elemente":[{"articol":"...", "detalii":"culoare, material, croiala", "magazin":"...", "cautare":"..."}]}]
+   "elemente":[{"articol":"...", "detalii":"culoare, material, croiala", "cautare":"...", "magazine":{"accesibil":"...","mediu":"...","premium":"..."}}]}]
 }`;
 }
 
@@ -103,7 +113,10 @@ REGULI SPECIFICE MACHIAJ SI COAFURA:
 - Daca persoana a ales "fara machiaj" sau un look natural, evalueaza cat de ingrijit si potrivit este acel look pentru ocazie, nu penaliza lipsa machiajului ca atare.
 - Daca un element nu se vede clar (ex: ochii acoperiti, parul taiat din cadru), pune vizibil=false, scor=null.
 - Pentru fotografii cu blitz, tine cont de riscul de "flashback" (produse cu SPF sau pudre cu silice) doar ca recomandare, nu ca certitudine.
-- Elementele propuse pot fi produse (cu magazin DOAR din lista: ${BEAUTY_STORES.join(", ")}) sau tehnici/schimbari de coafura fara produs (atunci "magazin": "" si "cautare": ""). Nu numi branduri daca nu esti sigur ca se vand la magazinul indicat; descrie tipul de produs (ex: "ruj mat nuanta caramiziu"). "cautare" = 2-5 cuvinte in romana.
+- Elementele propuse pot fi produse sau tehnici/schimbari de coafura fara produs (atunci "magazine" are toate valorile "" si "cautare": ""). Nu numi branduri daca nu esti sigur ca se vand la magazinul indicat; descrie tipul de produs (ex: "ruj mat nuanta caramiziu"). "cautare" = 2-5 cuvinte in romana.
+- Magazine pe niveluri de pret:
+${tiersText(BEAUTY_TIERS)}
+- Bugetul utilizatorului este "${v(m.buget, "mediu")}": alege produse realiste pentru acest buget.
 
 STRUCTURA JSON:
 {
@@ -121,7 +134,7 @@ STRUCTURA JSON:
  "verdict": "o fraza scurta, directa",
  "limitari_analiza": "ce nu s-a putut evalua sau sir gol",
  "variante": [{"titlu":"...", "ce_schimbi":"...", "de_ce":"...", "scor_estimat": 0-100,
-   "elemente":[{"articol":"...", "detalii":"nuanta, finisaj, tehnica", "magazin":"...", "cautare":"..."}]}]
+   "elemente":[{"articol":"...", "detalii":"nuanta, finisaj, tehnica", "cautare":"...", "magazine":{"accesibil":"...","mediu":"...","premium":"..."}}]}]
 }`;
 }
 
@@ -173,7 +186,7 @@ export default async (req: Request) => {
       try {
         const s = anthropic.messages.stream({
           model: MODEL,
-          max_tokens: 3000,
+          max_tokens: 4500,
           messages: [{
             role: "user",
             content: [

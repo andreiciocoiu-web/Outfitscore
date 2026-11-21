@@ -102,6 +102,20 @@
   .slot h3{margin-bottom:4px}
   .slot .muted{margin-bottom:10px}
   .tag{flex:0 0 auto;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 10px;font-size:12px;font-weight:600}
+  .piece-v{padding:10px 0;border-top:1px dashed var(--line)}
+  .piece-v .p-name{font-weight:600;font-size:15px}
+  .piece-v .p-desc{font-size:13px;color:var(--muted)}
+  .tiers{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .tier{text-decoration:none;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:6px 9px;font-size:13px;font-weight:600;line-height:1.2}
+  .tier small{display:block;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .tier.mine{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tier.mine small{color:#e8ddd0}
+  .pick{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:var(--muted)}
+  .pick input{width:20px;height:20px;accent-color:var(--accent)}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .ba figure{margin:0}
+  .ba img{width:100%;border-radius:12px;display:block;background:#000}
+  .ba figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
 </style>
 </head>
 <body>
@@ -326,6 +340,7 @@
   <button class="btn btn-ghost hidden" id="backBtn">Inapoi</button>
   <button class="btn btn-primary hidden" id="nextBtn" disabled>Continua</button>
 </div></div>
+<script src="/vendor/jspdf.umd.min.js" defer></script>
 <script>
 // ---------- configurare ----------
 const MODULES = {
@@ -620,7 +635,7 @@ function renderResults(results){
   let h = '';
   if(ambele){
     const scores = order.map(m => results[m].total).filter(x => typeof x==='number');
-    const general = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+    const general = generalScore(results, order);
     h += `<div class="card"><span class="muted">✨ Look complet</span>
       <div class="score-hero">${ring(general)}<div><h2>${label(general)}</h2>
       <p class="verdict">${order.map(m => `${MODULES[m].titlu}: <b>${results[m].total ?? 'n/a'}</b>`).join(' · ')}</p></div></div>
@@ -628,7 +643,7 @@ function renderResults(results){
   }
   h += sections;
 
-  // variante: maxim 3 in total, ordonate dupa cresterea de scor
+  // variante: maxim 5 in total, ordonate dupa cresterea de scor
   let vars = [];
   order.forEach(m => {
     const r = results[m]; if(!r.data) return;
@@ -638,9 +653,11 @@ function renderResults(results){
     });
   });
   vars.sort((a,b) => (b.delta??-999) - (a.delta??-999));
-  vars = vars.slice(0,3);
+  vars = vars.slice(0, MAX_VARIANTE);
+  state.last = { results, order, vars, ambele, general: ambele ? generalScore(results, order) : null, date: new Date() };
+  state.generated = [];
   if(vars.length){
-    h += `<div class="card" style="margin-top:14px"><h3>Variante de imbunatatire</h3><p class="muted">Maxim 3, ordonate dupa cresterea de scor.</p>`;
+    h += `<div class="card" style="margin-top:14px"><h3>Variante de imbunatatire</h3><p class="muted">Pana la ${MAX_VARIANTE}, ordonate dupa cresterea de scor. Magazinele sunt grupate pe nivel de pret; nivelul tau de buget apare primul.</p>`;
     vars.forEach((v,i) => {
       const M = MODULES[v.modul];
       h += `<div class="variant"><div class="variant-head"><div>
@@ -648,21 +665,223 @@ function renderResults(results){
           <div class="delta"><b>${v.est ?? '-'}</b>${v.delta!=null?`<small>${v.delta>=0?'+':''}${v.delta} puncte${ambele?'<br>'+esc(M.titlu.toLowerCase()):''}</small>`:''}</div></div>
         <p style="font-size:15px;margin-top:6px">${esc(v.ce_schimbi||'')}</p><p class="muted">${esc(v.de_ce||'')}</p>`;
       (v.elemente||v.piese||[]).forEach(p => {
-        const shop = (p.magazin||'').trim();
-        const extra = v.modul==='tinuta' ? (state.answers.tinuta.sectiune||'') : '';
-        const q = encodeURIComponent(`${shop} ${p.cautare||p.articol||''} ${extra}`.trim());
-        h += `<div class="piece"><div><div class="p-name">${esc(p.articol||'')}</div><div class="p-desc">${esc(p.detalii||'')}</div></div>
-          ${shop ? `<a class="shop" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Cauta la ${esc(shop)} ↗</a>` : `<span class="tag">Tehnica</span>`}</div>`;
+        const shops = tierShops(p, v.modul);
+        h += `<div class="piece-v"><div class="p-name">${esc(p.articol||'')}</div><div class="p-desc">${esc(p.detalii||'')}</div>
+          ${shops.length ? `<div class="tiers">${shops.map(t => `<a class="tier ${t.mine?'mine':''}" href="https://www.google.com/search?q=${encodeURIComponent(`${t.shop.replace(/\s*\(.*\)$/,'')} ${p.cautare||p.articol||''} ${v.modul==='tinuta'?(state.answers.tinuta.sectiune||''):''}`.trim())}" target="_blank" rel="noopener"><small>${TIER_LABEL[t.tier]}</small>${esc(t.shop)} ↗</a>`).join('')}</div>` : `<span class="tag" style="display:inline-block;margin-top:6px">Tehnica, fara produs</span>`}</div>`;
       });
-      h += `</div>`;
+      h += `<label class="pick"><input type="checkbox" class="vpick" data-i="${i}" ${i<3?'checked':''}> Include in imaginea refacuta</label></div>`;
     });
-    h += `<p class="note">Scorul variantei este o estimare AI pentru ${ambele?'partea respectiva (tinuta sau machiaj si coafura)':'aceasta evaluare'}. Magazinele sunt alese dintr-o lista de retaileri prezenti in Romania; stocul, pretul si existenta produsului nu sunt verificate in timp real - linkul deschide o cautare.</p></div>`;
+    h += `<p class="note">Scorul variantei este o estimare AI pentru ${ambele?'partea respectiva (tinuta sau machiaj si coafura)':'aceasta evaluare'}. Nivelurile de pret ale magazinelor sunt o clasificare orientativa; stocul si preturile nu sunt verificate in timp real - linkurile deschid o cautare.</p></div>`;
+
+    h += `<div class="card"><h3>Imaginea refacuta</h3>
+      <p class="muted">Genereaza o versiune a pozei tale cu recomandarile bifate mai sus. Imaginea este creata de un model AI de editare (Gemini) si poate modifica detalii nedorite; e doar orientativa.</p>
+      <button class="btn btn-primary" id="genBtn" style="margin-top:10px">✨ Genereaza imaginea refacuta</button>
+      <div id="genOut"></div></div>`;
   }
+  h += `<div class="card"><h3>Raport PDF</h3><p class="muted">Include scorurile, detalierea, recomandarile cu magazinele si, daca le-ai generat, imaginile refacute.</p>
+    <button class="btn btn-ghost" id="pdfBtn" style="margin-top:10px">📄 Descarca raportul PDF</button><div id="pdfOut" class="muted" style="margin-top:8px"></div></div>`;
 
   const metode = order.map(m => `${MODULES[m].titlu.toLowerCase()} = ` + Object.entries(MODULES[m].weights).map(([k,w]) => `${MODULES[m].names[k].toLowerCase()} ${w}%`).join(', ')).join('; ');
   h += `<p class="note" style="text-align:center">Metoda: scor = medie ponderata a criteriilor vizibile (${esc(metode)}).${ambele?' Scorul general = media celor doua scoruri.':''} Evaluarea este subiectiva si orientativa.</p>`;
   $('result').innerHTML = h;
   $('result').classList.remove('hidden');
+  if($('genBtn')) $('genBtn').onclick = generateImages;
+  $('pdfBtn').onclick = makePdf;
+}
+
+// ---------- recomandari pe niveluri de pret ----------
+const MAX_VARIANTE = 5;
+const TIER_LABEL = { accesibil:'Accesibil', mediu:'Mediu', premium:'Premium' };
+const TIERS = ['accesibil','mediu','premium'];
+function tierShops(p, modul){
+  const mine = (modul==='tinuta' ? state.answers.tinuta.buget : state.answers.machiaj.buget) || 'mediu';
+  const mag = p.magazine || {};
+  let list = TIERS.map(t => ({ tier:t, shop: String(mag[t]||'').trim(), mine: t===mine })).filter(x => x.shop);
+  if(!list.length && p.magazin) list = [{ tier: mine, shop: p.magazin, mine: true }]; // compatibilitate
+  return list.sort((a,b) => (b.mine - a.mine) || (TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier)));
+}
+function generalScore(results, order){
+  const sc = order.map(m => results[m].total).filter(x => typeof x==='number');
+  return sc.length ? Math.round(sc.reduce((a,b)=>a+b,0)/sc.length) : null;
+}
+
+// ---------- imaginea refacuta (Gemini, prin /api/imagine) ----------
+function describeVariant(v){
+  const el = (v.elemente||v.piese||[]).map(p => [p.articol, p.detalii].filter(Boolean).join(' - ')).join('; ');
+  return `${v.titlu||''}: ${v.ce_schimbi||''}${el ? ' ('+el+')' : ''}`;
+}
+async function generateImages(){
+  const L = state.last; if(!L) return;
+  const picked = [...document.querySelectorAll('.vpick:checked')].map(c => L.vars[+c.dataset.i]).filter(Boolean);
+  const out = $('genOut');
+  if(!picked.length){ out.innerHTML = '<div class="err" style="margin-top:10px">Bifeaza cel putin o varianta.</div>'; return; }
+  // grupam recomandarile pe poza la care se aplica
+  const groups = {};
+  picked.forEach(v => {
+    const slot = v.modul==='tinuta' ? 'corp' : (state.blobs.fata ? 'fata' : 'corp');
+    (groups[slot] = groups[slot] || []).push(v);
+  });
+  const btn = $('genBtn'); btn.disabled = true; btn.textContent = 'Generez imaginea... (poate dura 20-40 s)';
+  out.innerHTML = ''; state.generated = [];
+  try{
+    for(const slot of Object.keys(groups)){
+      const res = await fetch('/api/imagine', { method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ image: await img(slot), modificari: groups[slot].map(describeVariant) }) });
+      let j = null; try{ j = await res.json(); }catch(_){}
+      if(!res.ok || !j || !j.image){
+        const m = (j && j.eroare) || (res.status===429 ? 'Prea multe generari intr-un minut. Asteapta putin.' : 'Generarea imaginii a esuat ('+res.status+').');
+        out.insertAdjacentHTML('beforeend', `<div class="err" style="margin-top:10px">${esc(m)}</div>`); continue;
+      }
+      const after = `data:${j.mediaType};base64,${j.image}`;
+      const before = URL.createObjectURL(state.blobs[slot]);
+      state.generated.push({ slot, after, titluri: groups[slot].map(v => v.titlu) });
+      out.insertAdjacentHTML('beforeend', `<div class="ba">
+        <figure><img src="${before}" alt="Inainte"><figcaption>Inainte</figcaption></figure>
+        <figure><img src="${after}" alt="Dupa"><figcaption>Dupa (imagine generata AI)</figcaption></figure></div>
+        <p class="note">Aplicat: ${esc(groups[slot].map(v=>v.titlu).join(', '))}</p>`);
+    }
+  }catch(e){
+    out.insertAdjacentHTML('beforeend', `<div class="err" style="margin-top:10px">${esc(e.message||'Eroare de retea.')}</div>`);
+  }finally{
+    btn.disabled = false; btn.textContent = '✨ Genereaza din nou';
+  }
+}
+
+// ---------- raport PDF (jsPDF, generat pe telefon) ----------
+function blobToDataURL(blob){ return new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); }); }
+function imgSize(src){ return new Promise(r => { const i = new Image(); i.onload = () => r({w:i.width, h:i.height}); i.onerror = () => r(null); i.src = src; }); }
+async function toJpeg(src, max=900){ // reduce marimea PDF-ului
+  const s = await imgSize(src); if(!s) return null;
+  const k = Math.min(1, max/Math.max(s.w, s.h)); const c = document.createElement('canvas');
+  c.width = Math.round(s.w*k); c.height = Math.round(s.h*k);
+  const i = new Image(); await new Promise(r => { i.onload = r; i.src = src; });
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(i,0,0,c.width,c.height);
+  return { data: c.toDataURL('image/jpeg', 0.8), w: c.width, h: c.height };
+}
+function pdfSafe(t){ return String(t??'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E\n]/g,''); }
+
+async function makePdf(){
+  const L = state.last; if(!L) return;
+  const status = $('pdfOut'); const btn = $('pdfBtn');
+  if(!window.jspdf){ status.textContent = 'Modulul PDF nu s-a incarcat. Reincarca pagina.'; return; }
+  btn.disabled = true; status.textContent = 'Generez PDF-ul...';
+  try{
+    const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const W = 210, M = 16, CW = W - 2*M; let y = M;
+    const ink = [29,26,23], muted = [111,103,94], accent = [180,83,42];
+    const ensure = h => { if(y + h > 297 - M){ doc.addPage(); y = M; } };
+    const text = (t, {size=10, bold=false, color=ink, gap=1.5, indent=0}={}) => {
+      doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(size); doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(pdfSafe(t), CW - indent); const lh = size*0.42;
+      lines.forEach(l => { ensure(lh); doc.text(l, M+indent, y + lh*0.8); y += lh; }); y += gap;
+    };
+    const rule = () => { ensure(4); doc.setDrawColor(230,222,211); doc.line(M, y, W-M, y); y += 4; };
+    const scoreColor = v => v>=7.5 ? [47,125,85] : v>=5 ? [192,138,30] : [178,58,58];
+    const addImage = async (src, maxW, maxH, x) => {
+      const j = await toJpeg(src); if(!j) return 0;
+      const k = Math.min(maxW/j.w, maxH/j.h); const w = j.w*k, h = j.h*k;
+      doc.addImage(j.data, 'JPEG', x, y, w, h); return h;
+    };
+
+    // antet
+    doc.setFillColor(...accent); doc.rect(0, 0, W, 4, 'F');
+    text('OutfitScore - raport de evaluare', {size:20, bold:true, gap:1});
+    text(`${L.order.map(m=>MODULES[m].titlu).join(' + ')}  |  ${L.date.toLocaleString('ro-RO')}`, {size:9, color:muted, gap:4});
+
+    // context
+    const c = state.answers.context;
+    text('Context', {size:12, bold:true});
+    const ctx = [['Ocazia', ocazieText()], ['Vizibilitate', c.evidenta], ['Moment', c.moment], ['Vreme', c.sezon]];
+    if(L.order.includes('tinuta')){ const t = state.answers.tinuta; ctx.push(['Dress code', t.dresscode], ['Sectiune', t.sectiune], ['Buget tinuta', t.buget || 'mediu (implicit)']); }
+    if(L.order.includes('machiaj')){ const m = state.answers.machiaj; ctx.push(['Stil machiaj', m.stil], ['Rezistenta', m.rezistenta], ['Par', [m.par_lungime, m.par_textura].filter(Boolean).join(', ')], ['Buget machiaj', m.buget || 'mediu (implicit)']); }
+    ctx.filter(([,v]) => v).forEach(([k,v]) => text(`${k}: ${v}`, {size:9.5, gap:0.6}));
+    y += 2;
+
+    // poze originale
+    const slots = [...new Set(L.order.flatMap(m => m==='tinuta' ? ['corp'] : (state.blobs.fata ? ['fata'] : [])))].filter(s => state.blobs[s]);
+    if(slots.length){
+      ensure(72); let x = M, hmax = 0;
+      for(const s of slots){ const h = await addImage(await blobToDataURL(state.blobs[s]), 55, 70, x); x += 60; hmax = Math.max(hmax, h); }
+      y += hmax + 4;
+    }
+
+    // scor general
+    if(L.ambele){
+      rule(); text(`Scor general look: ${L.general ?? 'n/a'} / 100 - ${label(L.general)}`, {size:14, bold:true, color:accent});
+      text(L.order.map(m => `${MODULES[m].titlu}: ${L.results[m].total ?? 'n/a'}`).join('   |   '), {size:10, color:muted, gap:3});
+    }
+
+    // sectiuni pe modul
+    for(const m of L.order){
+      const r = L.results[m], Md = MODULES[m]; rule();
+      if(r.error){ text(`${Md.titlu}: nu a putut fi analizata (${r.error})`, {size:11, bold:true}); continue; }
+      const d = r.data, {excluded, coverage} = computeTotal(m, d.criterii);
+      text(`${Md.titlu}: ${r.total ?? 'n/a'} / 100 - ${label(r.total)}`, {size:14, bold:true, color:accent, gap:1});
+      if(d.verdict) text(d.verdict, {size:10.5, bold:true});
+      if(d.descriere) text(d.descriere, {size:9.5, color:muted});
+      if(excluded.length || (d.limitari_analiza||'').trim())
+        text(`Limitari: ${excluded.length ? `nu s-a putut nota ${excluded.join(', ')} (scor calculat pe ${coverage}% din grila). ` : ''}${d.limitari_analiza||''}`, {size:9, color:[150,100,20]});
+      text('Detaliere scor', {size:11, bold:true, gap:1});
+      for(const k in Md.weights){
+        const cr = (d.criterii||{})[k] || {}; const na = typeof cr.scor!=='number' || cr.vizibil===false;
+        const v = na ? null : Math.max(0, Math.min(10, cr.scor));
+        ensure(12);
+        doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...ink);
+        doc.text(pdfSafe(`${Md.names[k]} (${Md.weights[k]}%)`), M, y+3.5);
+        doc.text(na ? 'n/a' : `${v}/10`, W-M, y+3.5, {align:'right'});
+        y += 5; doc.setFillColor(230,222,211); doc.rect(M, y, CW, 1.6, 'F');
+        if(!na){ doc.setFillColor(...scoreColor(v)); doc.rect(M, y, CW*v/10, 1.6, 'F'); }
+        y += 3; text(cr.comentariu || (na ? 'Nu se vede in poza.' : ''), {size:8.8, color:muted, gap:1.5});
+      }
+      if((d.puncte_forte||[]).length){ text('Ce functioneaza', {size:10.5, bold:true, gap:0.5}); d.puncte_forte.forEach(x => text('- '+x, {size:9.3, gap:0.4, indent:2})); y += 1.5; }
+      if((d.de_imbunatatit||[]).length){ text('Ce trage scorul in jos', {size:10.5, bold:true, gap:0.5}); d.de_imbunatatit.forEach(x => text('- '+x, {size:9.3, gap:0.4, indent:2})); y += 1.5; }
+    }
+
+    // recomandari
+    if(L.vars.length){
+      rule(); text('Recomandari', {size:14, bold:true, color:accent, gap:2});
+      L.vars.forEach((v,i) => {
+        ensure(20);
+        text(`${i+1}. ${v.titlu||''}${L.ambele ? ` [${MODULES[v.modul].titlu}]` : ''}  -  scor estimat ${v.est ?? 'n/a'}${v.delta!=null ? ` (${v.delta>=0?'+':''}${v.delta})` : ''}`, {size:10.5, bold:true, gap:0.8});
+        if(v.ce_schimbi) text(v.ce_schimbi, {size:9.5, gap:0.6, indent:3});
+        if(v.de_ce) text(v.de_ce, {size:9, color:muted, gap:0.8, indent:3});
+        (v.elemente||v.piese||[]).forEach(p => {
+          const shops = tierShops(p, v.modul);
+          text(`* ${p.articol||''}${p.detalii ? ' - '+p.detalii : ''}`, {size:9.3, gap:0.3, indent:3});
+          text(shops.length ? 'Magazine: ' + shops.map(t => `${TIER_LABEL[t.tier]}: ${t.shop}${t.mine?' (bugetul tau)':''}`).join('  |  ') : 'Tehnica, fara produs', {size:8.6, color:muted, gap:0.8, indent:6});
+        });
+        y += 1.5;
+      });
+    }
+
+    // imagini generate
+    if(state.generated.length){
+      rule(); text('Imaginea refacuta (generata AI, orientativa)', {size:14, bold:true, color:accent, gap:2});
+      for(const g of state.generated){
+        ensure(95); let hmax = 0;
+        hmax = Math.max(hmax, await addImage(await blobToDataURL(state.blobs[g.slot]), 85, 110, M));
+        hmax = Math.max(hmax, await addImage(g.after, 85, 110, M + CW/2 + 2));
+        y += hmax + 2;
+        text(`Stanga: original. Dreapta: cu recomandarile aplicate (${g.titluri.join(', ')}).`, {size:8.6, color:muted, gap:3});
+      }
+    }
+
+    // metoda
+    rule();
+    const metode = L.order.map(m => `${MODULES[m].titlu}: ` + Object.entries(MODULES[m].weights).map(([k,w]) => `${MODULES[m].names[k]} ${w}%`).join(', ')).join('. ');
+    text(`Metoda: scorul fiecarei evaluari este media ponderata a criteriilor vizibile (${metode}).${L.ambele ? ' Scorul general este media celor doua scoruri.' : ''} Criteriile nevizibile sunt excluse, iar ponderile se renormalizeaza.`, {size:8.3, color:muted, gap:1});
+    text('Evaluarea si scorurile estimate sunt generate automat si sunt orientative. Nivelurile de pret ale magazinelor sunt o clasificare orientativa; stocul si preturile nu sunt verificate in timp real. Imaginile refacute sunt generate de un model AI si pot contine inexactitati.', {size:8.3, color:muted});
+
+    const name = `OutfitScore-${L.date.toISOString().slice(0,10)}.pdf`;
+    const blob = doc.output('blob'); const file = new File([blob], name, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({ files:[file] }) && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
+      try{ await navigator.share({ files:[file], title:'Raport OutfitScore' }); status.textContent = 'Raport generat.'; return; }
+      catch(e){ if(e.name==='AbortError'){ status.textContent = ''; return; } }
+    }
+    doc.save(name); status.textContent = 'Raport descarcat.';
+  }catch(e){
+    console.error(e); status.textContent = 'Nu am putut genera PDF-ul: ' + (e.message||e);
+  }finally{ btn.disabled = false; }
 }
 
 function esc(s){ return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
