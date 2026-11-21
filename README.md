@@ -11,5 +11,4 @@ Scor tinuta: colorit 25%, ocazie 25%, accesorii 15%, incaltaminte 15%, croiala 1
 
 ## Functii noi
 - Recomandari: pana la 5, fiecare produs cu cate un magazin pe nivel de pret (accesibil / mediu / premium); nivelul de buget ales apare primul. Clasificarea magazinelor pe niveluri e orientativa.
-- Imaginea refacuta: `netlify/functions/imagine.mts` -> `/api/imagine`, model Gemini de editare prin Netlify AI Gateway (variabila `IMAGE_MODEL`, implicit `gemini-3.1-flash-image`). Rate limit 4/minut/IP.
 - Raport PDF generat pe telefon (jsPDF, `public/vendor/jspdf.umd.min.js`), cu optiune de partajare pe mobil.
