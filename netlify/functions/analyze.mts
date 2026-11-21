@@ -71,8 +71,11 @@ const jsonError = (message: string, status: number) =>
   Response.json({ eroare: message }, { status });
 
 export default async (req: Request) => {
-  if (!Netlify.env.get("ANTHROPIC_BASE_URL") && !Netlify.env.get("ANTHROPIC_API_KEY")) {
-    return jsonError("Serviciul AI nu este activ inca pe acest site (AI Gateway necesita un deploy de productie).", 503);
+  // Prioritate: cheia proprie Anthropic (CLAUDE_API_KEY, apel direct la api.anthropic.com).
+  // Rezerva: Netlify AI Gateway (injecteaza ANTHROPIC_API_KEY + ANTHROPIC_BASE_URL).
+  const ownKey = Netlify.env.get("CLAUDE_API_KEY");
+  if (!ownKey && !Netlify.env.get("ANTHROPIC_BASE_URL") && !Netlify.env.get("ANTHROPIC_API_KEY")) {
+    return jsonError("Serviciul AI nu este configurat (lipseste CLAUDE_API_KEY).", 503);
   }
 
   let body: { image?: string; mediaType?: string; answers?: Answers };
@@ -95,7 +98,9 @@ export default async (req: Request) => {
   };
   if (!answers.ocazie || !answers.evidenta) return jsonError("Completeaza chestionarul.", 400);
 
-  const anthropic = new Anthropic(); // AI Gateway injecteaza ANTHROPIC_API_KEY si ANTHROPIC_BASE_URL
+  const anthropic = ownKey
+    ? new Anthropic({ apiKey: ownKey, baseURL: "https://api.anthropic.com" })
+    : new Anthropic(); // AI Gateway
 
   // Raspuns transmis treptat (streaming), ca sa nu atingem limita de timp a functiei.
   const encoder = new TextEncoder();
@@ -121,7 +126,11 @@ export default async (req: Request) => {
           ? "Prea multe cereri. Asteapta un minut si incearca din nou."
           : status === 402
             ? "Creditele AI ale site-ului s-au epuizat."
-            : "Analiza AI a esuat. Incearca din nou.";
+            : status === 401
+              ? "Cheia API Claude este invalida sau a fost revocata."
+              : status === 400 && /credit/i.test(e?.message ?? "")
+                ? "Contul Anthropic nu are credit suficient."
+                : "Analiza AI a esuat. Incearca din nou.";
         console.error("analyze error", status, e?.message);
         controller.enqueue(encoder.encode(`\n@@EROARE@@${msg}`));
       } finally {
