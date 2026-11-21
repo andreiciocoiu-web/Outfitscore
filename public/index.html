@@ -93,6 +93,15 @@
   .shop{flex:0 0 auto;text-decoration:none;background:var(--ink);color:#fff;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600;text-align:center;max-width:46%}
   .note{font-size:12px;color:var(--muted);margin-top:10px}
   .tabs{display:flex;gap:6px;margin-bottom:6px}
+  .mode-card{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:12px;font:inherit;color:var(--ink);cursor:pointer;min-height:92px}
+  .mode-card:active,.mode-card.on{border-color:var(--ink)}
+  .mode-card b{display:block;font-family:Fraunces,Georgia,serif;font-size:19px;margin-bottom:3px}
+  .mode-card small{display:block;color:var(--muted);font-size:14px;line-height:1.35}
+  .mode-ico{flex:0 0 auto;width:52px;height:52px;border-radius:14px;background:var(--accent-soft);display:grid;place-items:center;font-size:26px}
+  .slot{margin-bottom:22px}
+  .slot h3{margin-bottom:4px}
+  .slot .muted{margin-bottom:10px}
+  .tag{flex:0 0 auto;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 10px;font-size:12px;font-weight:600}
 </style>
 </head>
 <body>
@@ -100,17 +109,35 @@
   <header class="top">
     <div class="brand"><div class="logo">O</div><div><h1>OutfitScore</h1></div></div>
   </header>
-  <div class="steps"><span id="st1" class="on"></span><span id="st2"></span><span id="st3"></span></div>
+  <div class="steps"><span id="st0" class="on"></span><span id="st1"></span><span id="st2"></span><span id="st3"></span></div>
 
-  <!-- PAS 1: CHESTIONAR -->
-  <section id="step1">
-    <h2>Pentru ce te-ai imbracat?</h2>
-    <p class="muted" style="margin-bottom:16px">Scorul tine cont de context. Aceeasi tinuta poate fi perfecta la birou si gresita la o nunta.</p>
+  <!-- PAS 0: ALEGERE -->
+  <section id="step0">
+    <h2>Ce vrei sa evaluam?</h2>
+    <p class="muted" style="margin-bottom:16px">Alege o optiune. Fiecare are chestionarul ei.</p>
+    <button class="mode-card" data-mode="machiaj">
+      <span class="mode-ico">💄</span>
+      <span><b>Machiaj si coafura</b><small>Baza, ochi, buze, armonie, coafura. Ai nevoie de un portret de aproape.</small></span>
+    </button>
+    <button class="mode-card" data-mode="tinuta">
+      <span class="mode-ico">👗</span>
+      <span><b>Tinuta</b><small>Colorit, accesorii, incaltaminte, croiala. Ai nevoie de o poza cu tot corpul.</small></span>
+    </button>
+    <button class="mode-card" data-mode="ambele">
+      <span class="mode-ico">✨</span>
+      <span><b>Ambele</b><small>Look complet: doua scoruri separate si unul general. Doua poze.</small></span>
+    </button>
+  </section>
+
+  <!-- PAS 1: CHESTIONARE -->
+  <section id="step1" class="hidden">
+    <h2>Despre eveniment</h2>
+    <p class="muted" style="margin-bottom:16px">Scorul tine cont de context.</p>
 
     <div class="card">
       <div class="q">
         <span class="q-label">Ocazia</span>
-        <div class="chips" data-q="ocazie">
+        <div class="chips" data-g="context" data-q="ocazie">
           <button class="chip" data-v="Munca - birou (business / business casual)">Munca / birou</button>
           <button class="chip" data-v="Iesire in oras casual (cafenea, plimbare, prieteni)">Iesire casual</button>
           <button class="chip" data-v="Eveniment de seara (cina eleganta, teatru, gala, cocktail)">Eveniment de seara</button>
@@ -120,104 +147,176 @@
           <button class="chip" data-v="Intalnire romantica (date)">Date</button>
           <button class="chip" data-v="Interviu de angajare">Interviu</button>
           <button class="chip" data-v="Club / petrecere in club">Club</button>
+          <button class="chip" data-v="Sedinta foto">Sedinta foto</button>
           <button class="chip" data-v="ALTA">Alta ocazie</button>
         </div>
         <input type="text" id="tema" class="hidden" placeholder="Care e tema? (ex: anii '80, Great Gatsby, all white)" style="margin-top:10px">
         <input type="text" id="altaOcazie" class="hidden" placeholder="Descrie ocazia" style="margin-top:10px">
       </div>
-
       <div class="q">
         <span class="q-label">Vrei sa iesi in evidenta?</span>
-        <div class="seg" data-q="evidenta">
+        <div class="seg" data-g="context" data-q="evidenta">
           <button class="chip" data-v="Discret - vreau sa ma integrez, fara sa atrag atentia">Discret<small>ma integrez</small></button>
           <button class="chip" data-v="Echilibrat - ingrijit, dar fara exagerari">Echilibrat<small>ingrijit, sobru</small></button>
           <button class="chip" data-v="Vreau sa ies in evidenta - sa fiu remarcat(a)">Da!<small>sa fiu remarcat(a)</small></button>
         </div>
       </div>
-
-      <div class="q">
-        <span class="q-label">Dress code anuntat? <span class="muted">(optional)</span></span>
-        <div class="chips" data-q="dresscode" data-optional="1">
-          <button class="chip" data-v="Fara dress code">Fara</button>
-          <button class="chip" data-v="Casual">Casual</button>
-          <button class="chip" data-v="Smart casual">Smart casual</button>
-          <button class="chip" data-v="Business formal">Business</button>
-          <button class="chip" data-v="Cocktail">Cocktail</button>
-          <button class="chip" data-v="Black tie">Black tie</button>
-        </div>
-      </div>
-
-      <div class="q">
+      <div class="q" style="margin-bottom:0">
         <span class="q-label">Moment si vreme <span class="muted">(optional)</span></span>
-        <div class="chips" data-q="moment" data-optional="1">
+        <div class="chips" data-g="context" data-q="moment" data-optional="1">
           <button class="chip" data-v="ziua">Ziua</button>
           <button class="chip" data-v="seara">Seara</button>
         </div>
-        <div class="chips" data-q="sezon" data-optional="1" style="margin-top:8px">
+        <div class="chips" data-g="context" data-q="sezon" data-optional="1" style="margin-top:8px">
           <button class="chip" data-v="frig (iarna)">Frig</button>
           <button class="chip" data-v="racoare (primavara/toamna)">Racoare</button>
           <button class="chip" data-v="cald (vara)">Cald</button>
+          <button class="chip" data-v="ploaie / umezeala">Ploaie / umezeala</button>
         </div>
       </div>
+    </div>
 
-      <div class="q">
-        <span class="q-label">Pentru sugestii de cumparaturi <span class="muted">(optional)</span></span>
-        <div class="chips" data-q="sectiune" data-optional="1">
-          <button class="chip" data-v="femei">Moda femei</button>
-          <button class="chip" data-v="barbati">Moda barbati</button>
+    <!-- Chestionar MACHIAJ SI COAFURA -->
+    <div id="qMachiaj" class="hidden">
+      <h2 style="margin-top:22px">💄 Machiaj si coafura</h2>
+      <div class="card">
+        <div class="q">
+          <span class="q-label">Ce stil de machiaj ai vrut sa obtii?</span>
+          <div class="chips" data-g="machiaj" data-q="stil">
+            <button class="chip" data-v="Fara machiaj / doar ingrijire">Fara machiaj</button>
+            <button class="chip" data-v="Natural (no-makeup makeup)">Natural</button>
+            <button class="chip" data-v="Soft glam">Soft glam</button>
+            <button class="chip" data-v="Glam complet / de seara">Glam complet</button>
+            <button class="chip" data-v="Editorial / artistic / tematic">Editorial / artistic</button>
+          </div>
         </div>
-        <div class="chips" data-q="buget" data-optional="1" style="margin-top:8px">
-          <button class="chip" data-v="accesibil">Buget accesibil</button>
-          <button class="chip" data-v="mediu">Mediu</button>
-          <button class="chip" data-v="premium">Premium</button>
+        <div class="q">
+          <span class="q-label">Cat trebuie sa reziste?</span>
+          <div class="chips" data-g="machiaj" data-q="rezistenta">
+            <button class="chip" data-v="cateva ore">Cateva ore</button>
+            <button class="chip" data-v="toata ziua">Toata ziua</button>
+            <button class="chip" data-v="toata noaptea, cu dans / caldura">Toata noaptea</button>
+          </div>
+        </div>
+        <div class="q">
+          <span class="q-label">Parul tau <span class="muted">(optional)</span></span>
+          <div class="chips" data-g="machiaj" data-q="par_lungime" data-optional="1">
+            <button class="chip" data-v="scurt">Scurt</button>
+            <button class="chip" data-v="mediu">Mediu</button>
+            <button class="chip" data-v="lung">Lung</button>
+          </div>
+          <div class="chips" data-g="machiaj" data-q="par_textura" data-optional="1" style="margin-top:8px">
+            <button class="chip" data-v="drept">Drept</button>
+            <button class="chip" data-v="ondulat">Ondulat</button>
+            <button class="chip" data-v="cret">Cret</button>
+            <button class="chip" data-v="foarte cret / afro">Foarte cret</button>
+          </div>
+        </div>
+        <div class="q">
+          <span class="q-label">Tipul tenului <span class="muted">(optional, pentru recomandari de produse)</span></span>
+          <div class="chips" data-g="machiaj" data-q="ten" data-optional="1">
+            <button class="chip" data-v="normal">Normal</button>
+            <button class="chip" data-v="gras">Gras</button>
+            <button class="chip" data-v="uscat">Uscat</button>
+            <button class="chip" data-v="mixt">Mixt</button>
+            <button class="chip" data-v="sensibil">Sensibil</button>
+          </div>
+        </div>
+        <div class="q">
+          <span class="q-label">Alte detalii <span class="muted">(optional)</span></span>
+          <div class="chips" data-g="machiaj" data-q="blitz" data-optional="1">
+            <button class="chip" data-v="da, vor fi fotografii cu blitz">Vor fi poze cu blitz</button>
+          </div>
+          <div class="chips" data-g="machiaj" data-q="ochelari" data-optional="1" style="margin-top:8px">
+            <button class="chip" data-v="da">Port ochelari</button>
+          </div>
+          <div class="chips" data-g="machiaj" data-q="buget" data-optional="1" style="margin-top:8px">
+            <button class="chip" data-v="accesibil">Buget accesibil</button>
+            <button class="chip" data-v="mediu">Mediu</button>
+            <button class="chip" data-v="premium">Premium</button>
+          </div>
+        </div>
+        <div class="q" style="margin-bottom:0">
+          <textarea id="detaliiMachiaj" placeholder="Ex: am facut singura coafura, vreau sa scot in evidenta ochii..."></textarea>
         </div>
       </div>
+    </div>
 
-      <div class="q" style="margin-bottom:0">
-        <span class="q-label">Alte detalii <span class="muted">(optional)</span></span>
-        <textarea id="detalii" placeholder="Ex: sacoul e nou, nu vreau sa schimb pantofii, stau mult in picioare..."></textarea>
+    <!-- Chestionar TINUTA -->
+    <div id="qTinuta" class="hidden">
+      <h2 style="margin-top:22px">👗 Tinuta</h2>
+      <div class="card">
+        <div class="q">
+          <span class="q-label">Dress code anuntat? <span class="muted">(optional)</span></span>
+          <div class="chips" data-g="tinuta" data-q="dresscode" data-optional="1">
+            <button class="chip" data-v="Fara dress code">Fara</button>
+            <button class="chip" data-v="Casual">Casual</button>
+            <button class="chip" data-v="Smart casual">Smart casual</button>
+            <button class="chip" data-v="Business formal">Business</button>
+            <button class="chip" data-v="Cocktail">Cocktail</button>
+            <button class="chip" data-v="Black tie">Black tie</button>
+          </div>
+        </div>
+        <div class="q">
+          <span class="q-label">Pentru sugestii de cumparaturi <span class="muted">(optional)</span></span>
+          <div class="chips" data-g="tinuta" data-q="sectiune" data-optional="1">
+            <button class="chip" data-v="femei">Moda femei</button>
+            <button class="chip" data-v="barbati">Moda barbati</button>
+          </div>
+          <div class="chips" data-g="tinuta" data-q="buget" data-optional="1" style="margin-top:8px">
+            <button class="chip" data-v="accesibil">Buget accesibil</button>
+            <button class="chip" data-v="mediu">Mediu</button>
+            <button class="chip" data-v="premium">Premium</button>
+          </div>
+        </div>
+        <div class="q" style="margin-bottom:0">
+          <span class="q-label">Alte detalii <span class="muted">(optional)</span></span>
+          <textarea id="detaliiTinuta" placeholder="Ex: sacoul e nou, nu vreau sa schimb pantofii, stau mult in picioare..."></textarea>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- PAS 2: POZA -->
+  <!-- PAS 2: POZE -->
   <section id="step2" class="hidden">
-    <h2>Fa-ti un selfie</h2>
-    <p class="muted" style="margin-bottom:14px">Ideal: in oglinda, tot corpul, cu incaltamintea vizibila.</p>
-    <div id="summary" style="margin-bottom:12px"></div>
+    <h2>Pozele</h2>
+    <div id="summary" style="margin:8px 0 14px"></div>
 
-    <div id="pickers">
-      <div class="drop picker" id="dropZone">
-        <div class="ico">📸</div>
-        <div style="font-weight:600;margin-top:6px">Fa o poza acum</div>
-        <div class="muted">deschide camera telefonului</div>
-        <input type="file" id="fileCam" accept="image/*" capture="user" aria-label="Fa o poza">
+    <div id="slotFata" class="slot hidden">
+      <h3>📷 Portret pentru machiaj si coafura</h3>
+      <p class="muted" id="hintFata">Fata si parul complet in cadru, de aproape, lumina naturala din fata, fara filtre.</p>
+      <div class="pickers">
+        <div class="drop picker"><div class="ico">🤳</div><div style="font-weight:600;margin-top:6px">Fa un selfie</div>
+          <input type="file" accept="image/*" capture="user" data-slot="fata" aria-label="Fa un selfie"></div>
+        <div class="btn btn-ghost picker" style="margin-top:10px">🖼️ Alege din galerie
+          <input type="file" accept="image/*" data-slot="fata" aria-label="Alege din galerie"></div>
       </div>
-      <div class="btn btn-ghost picker" id="galBtn" style="margin-top:10px">
-        🖼️ Alege din galerie
-        <input type="file" id="fileGal" accept="image/*" aria-label="Alege din galerie">
-      </div>
+      <div class="previewBox hidden"><div class="preview"><img alt="Portret"></div>
+        <button class="btn btn-ghost retake" data-slot="fata" style="margin-top:10px">Schimba poza</button></div>
     </div>
 
-    <div id="previewBox" class="hidden">
-      <div class="preview"><img id="previewImg" alt="Poza ta"></div>
-      <button class="btn btn-ghost" id="retake" style="margin-top:10px">Schimba poza</button>
+    <div id="slotCorp" class="slot hidden">
+      <h3>🪞 Poza cu tinuta</h3>
+      <p class="muted">Ideal in oglinda, tot corpul, cu incaltamintea vizibila, fara filtre.</p>
+      <div class="pickers">
+        <div class="drop picker"><div class="ico">📸</div><div style="font-weight:600;margin-top:6px">Fa o poza acum</div>
+          <input type="file" accept="image/*" capture="user" data-slot="corp" aria-label="Fa o poza"></div>
+        <div class="btn btn-ghost picker" style="margin-top:10px">🖼️ Alege din galerie
+          <input type="file" accept="image/*" data-slot="corp" aria-label="Alege din galerie"></div>
+      </div>
+      <div class="previewBox hidden"><div class="preview"><img alt="Tinuta"></div>
+        <button class="btn btn-ghost retake" data-slot="corp" style="margin-top:10px">Schimba poza</button></div>
     </div>
 
-    <ul class="tips">
-      <li>Lumina naturala, din fata - culorile se citesc corect.</li>
-      <li>Fara filtre: modifica culorile si scorul de colorit.</li>
-      <li>Daca nu se vad pantofii sau accesoriile, acele criterii nu vor fi notate.</li>
-    </ul>
-    <p class="note">Poza este trimisa unui serviciu AI doar pentru analiza si nu este salvata. <a href="/confidentialitate.html">Confidentialitate</a></p>
+    <p class="note">Pozele sunt trimise unui serviciu AI doar pentru analiza si nu sunt salvate. <a href="/confidentialitate.html">Confidentialitate</a></p>
   </section>
 
   <!-- PAS 3: REZULTAT -->
   <section id="step3" class="hidden">
     <div id="loading" class="loader">
       <div class="spin"></div>
-      <h3>Analizez tinuta...</h3>
-      <p class="muted" id="loadMsg">Citesc culorile, piesele si accesoriile</p>
+      <h3>Analizez...</h3>
+      <p class="muted" id="loadMsg">Citesc culorile si detaliile</p>
     </div>
     <div id="result" class="hidden"></div>
   </section>
@@ -225,168 +324,217 @@
 
 <div class="bar"><div class="wrap">
   <button class="btn btn-ghost hidden" id="backBtn">Inapoi</button>
-  <button class="btn btn-primary" id="nextBtn" disabled>Continua</button>
+  <button class="btn btn-primary hidden" id="nextBtn" disabled>Continua</button>
 </div></div>
-
 <script>
 // ---------- configurare ----------
-const WEIGHTS = { colorit:25, ocazie:25, accesorii:15, incaltaminte:15, croiala:10, obiectiv:10 };
-const CRIT_NAMES = {
-  colorit:"Colorit si armonie cromatica",
-  ocazie:"Potrivire cu ocazia",
-  accesorii:"Accesorii",
-  incaltaminte:"Incaltaminte",
-  croiala:"Croiala si proportii",
-  obiectiv:"Obiectivul tau (evidenta vs. discretie)"
+const MODULES = {
+  tinuta: {
+    titlu: "Tinuta", ico: "👗",
+    weights: { colorit:25, ocazie:25, accesorii:15, incaltaminte:15, croiala:10, obiectiv:10 },
+    names: { colorit:"Colorit si armonie cromatica", ocazie:"Potrivire cu ocazia", accesorii:"Accesorii",
+             incaltaminte:"Incaltaminte", croiala:"Croiala si proportii", obiectiv:"Obiectivul tau (evidenta vs. discretie)" },
+    msgs: ["Citesc culorile si piesele","Verific accesoriile si incaltamintea","Compar cu ocazia"]
+  },
+  machiaj: {
+    titlu: "Machiaj si coafura", ico: "💄",
+    weights: { baza:20, ochi:15, buze_obraji:10, armonie:15, coafura:25, ocazie:15 },
+    names: { baza:"Baza (ten, finisaj, nuanta)", ochi:"Ochi si sprancene", buze_obraji:"Buze si obraji",
+             armonie:"Armonia culorilor", coafura:"Coafura", ocazie:"Potrivire cu ocazia si stilul dorit" },
+    msgs: ["Analizez baza si finisajul","Verific ochii, buzele si armonia","Evaluez coafura"]
+  }
 };
-// Retaileri de moda cu prezenta in Romania (lista curatoriata; disponibilitatea produselor NU este verificata live)
-const STORES = ["Zara","H&M","Reserved","Mango","Massimo Dutti","Bershka","Pull&Bear","Stradivarius","Sinsay","LC Waikiki","Answear","eMAG","CCC","Deichmann","Benvenuti","Musette"];
+const MODES = { tinuta:["tinuta"], machiaj:["machiaj"], ambele:["tinuta","machiaj"] };
 
-const state = { step:1, answers:{}, blob:null, sample:null, busy:false };
+const state = { step:0, mode:null, answers:{context:{}, machiaj:{}, tinuta:{}}, blobs:{fata:null, corp:null}, busy:false };
 const $ = id => document.getElementById(id);
+const mods = () => MODES[state.mode] || [];
 
-// ---------- chestionar ----------
-document.querySelectorAll('[data-q]').forEach(group=>{
-  group.addEventListener('click', e=>{
+// ---------- pas 0: alegere ----------
+document.querySelectorAll('.mode-card').forEach(c => c.addEventListener('click', () => {
+  state.mode = c.dataset.mode;
+  document.querySelectorAll('.mode-card').forEach(x => x.classList.toggle('on', x===c));
+  $('qMachiaj').classList.toggle('hidden', !mods().includes('machiaj'));
+  $('qTinuta').classList.toggle('hidden', !mods().includes('tinuta'));
+  go(1);
+}));
+
+// ---------- pas 1: chestionare ----------
+document.querySelectorAll('[data-q]').forEach(group => {
+  group.addEventListener('click', e => {
     const b = e.target.closest('.chip'); if(!b) return;
-    const q = group.dataset.q;
+    const g = group.dataset.g, q = group.dataset.q, bag = state.answers[g];
     const wasOn = b.classList.contains('on');
-    group.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-    if(wasOn && group.dataset.optional){ delete state.answers[q]; }
-    else { b.classList.add('on'); state.answers[q] = b.dataset.v; }
-    if(q==='ocazie'){
-      $('tema').classList.toggle('hidden', state.answers.ocazie !== 'Petrecere tematica / eveniment special');
-      $('altaOcazie').classList.toggle('hidden', state.answers.ocazie !== 'ALTA');
+    group.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    if(wasOn && group.dataset.optional) delete bag[q];
+    else { b.classList.add('on'); bag[q] = b.dataset.v; }
+    if(g==='context' && q==='ocazie'){
+      $('tema').classList.toggle('hidden', bag.ocazie !== 'Petrecere tematica / eveniment special');
+      $('altaOcazie').classList.toggle('hidden', bag.ocazie !== 'ALTA');
     }
     refresh();
   });
 });
-['tema','altaOcazie'].forEach(id=>$(id).addEventListener('input', refresh));
+['tema','altaOcazie'].forEach(id => $(id).addEventListener('input', refresh));
 
 function step1Valid(){
-  const a = state.answers;
-  if(!a.ocazie || !a.evidenta) return false;
-  if(a.ocazie==='ALTA' && !$('altaOcazie').value.trim()) return false;
+  const c = state.answers.context, m = state.answers.machiaj;
+  if(!c.ocazie || !c.evidenta) return false;
+  if(c.ocazie==='ALTA' && !$('altaOcazie').value.trim()) return false;
+  if(mods().includes('machiaj') && (!m.stil || !m.rezistenta)) return false;
   return true;
 }
 function ocazieText(){
-  const a = state.answers;
-  if(a.ocazie==='ALTA') return $('altaOcazie').value.trim();
-  if(a.ocazie.startsWith('Petrecere tematica')){
-    const t=$('tema').value.trim();
-    return a.ocazie + (t ? ` - tema: ${t}` : ' - tema nespecificata');
+  const c = state.answers.context;
+  if(c.ocazie==='ALTA') return $('altaOcazie').value.trim();
+  if(c.ocazie && c.ocazie.startsWith('Petrecere tematica')){
+    const t = $('tema').value.trim();
+    return c.ocazie + (t ? ` - tema: ${t}` : ' - tema nespecificata');
   }
-  return a.ocazie;
+  return c.ocazie;
 }
 
-// ---------- poza ----------
-$('retake').onclick = ()=> { state.blob=null; $('previewBox').classList.add('hidden'); $('pickers').classList.remove('hidden'); $('fileCam').value=''; $('fileGal').value=''; refresh(); };
-['fileCam','fileGal'].forEach(id=> $(id).addEventListener('change', e=>{
-  const f = e.target.files && e.target.files[0]; if(f) loadImage(f);
+// ---------- pas 2: poze ----------
+function slotEl(slot){ return $(slot==='fata' ? 'slotFata' : 'slotCorp'); }
+document.querySelectorAll('input[type=file][data-slot]').forEach(inp => inp.addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if(f) loadImage(f, inp.dataset.slot);
+  e.target.value = '';
 }));
-
-function loadImage(file){
+document.querySelectorAll('.retake').forEach(b => b.addEventListener('click', () => clearSlot(b.dataset.slot)));
+function clearSlot(slot){
+  state.blobs[slot] = null;
+  const el = slotEl(slot);
+  el.querySelector('.previewBox').classList.add('hidden');
+  el.querySelector('.pickers').classList.remove('hidden');
+  refresh();
+}
+function loadImage(file, slot){
   const url = URL.createObjectURL(file);
   const img = new Image();
-  img.onload = ()=>{
-    const max = 1280;
-    let {width:w, height:h} = img;
-    const k = Math.min(1, max/Math.max(w,h));
+  img.onload = () => {
+    const max = slot==='fata' ? 1400 : 1280;
+    let w = img.width, h = img.height; const k = Math.min(1, max/Math.max(w,h));
     w = Math.round(w*k); h = Math.round(h*k);
     const c = document.createElement('canvas'); c.width=w; c.height=h;
     c.getContext('2d').drawImage(img,0,0,w,h);
-    c.toBlob(b=>{
-      state.blob = b || file;
-      $('previewImg').src = URL.createObjectURL(b);
-      $('previewBox').classList.remove('hidden');
-      $('pickers').classList.add('hidden');
-      URL.revokeObjectURL(url);
-      refresh();
+    c.toBlob(b => {
+      state.blobs[slot] = b || file;
+      const el = slotEl(slot);
+      el.querySelector('.preview img').src = URL.createObjectURL(state.blobs[slot]);
+      el.querySelector('.previewBox').classList.remove('hidden');
+      el.querySelector('.pickers').classList.add('hidden');
+      URL.revokeObjectURL(url); refresh();
     }, 'image/jpeg', 0.85);
   };
-  img.onerror = ()=> { alertBox('Nu am putut citi imaginea. Incearca alt format (JPG/PNG).'); };
+  img.onerror = () => toast('Nu am putut citi imaginea. Incearca alt format (JPG/PNG).');
   img.src = url;
+}
+function photosValid(){
+  if(state.mode==='machiaj') return !!state.blobs.fata;
+  if(state.mode==='tinuta') return !!state.blobs.corp;
+  return !!state.blobs.corp; // la "ambele" portretul e recomandat, nu obligatoriu
+}
+function setupSlots(){
+  $('slotFata').classList.toggle('hidden', !mods().includes('machiaj'));
+  $('slotCorp').classList.toggle('hidden', !mods().includes('tinuta'));
+  $('hintFata').innerHTML = state.mode==='ambele'
+    ? 'Recomandat. Fata si parul de aproape, lumina naturala, fara filtre. <b>Daca il sari</b>, folosim poza cu tinuta, dar machiajul se evalueaza mai greu.'
+    : 'Fata si parul complet in cadru, de aproape, lumina naturala din fata, fara filtre.';
 }
 
 // ---------- navigare ----------
 function go(n){
   state.step = n;
-  [1,2,3].forEach(i=>{ $('step'+i).classList.toggle('hidden', i!==n); $('st'+i).classList.toggle('on', i<=n); });
-  if(n===2) renderSummary();
-  window.scrollTo({top:0,behavior:'smooth'});
+  [0,1,2,3].forEach(i => { $('step'+i).classList.toggle('hidden', i!==n); $('st'+i).classList.toggle('on', i<=n); });
+  if(n===2){ setupSlots(); renderSummary(); }
+  window.scrollTo({top:0, behavior:'smooth'});
   refresh();
 }
 function refresh(){
-  const next=$('nextBtn'), back=$('backBtn');
-  back.classList.toggle('hidden', state.step===1 || state.busy);
-  if(state.step===1){ next.textContent='Continua'; next.disabled=!step1Valid(); next.classList.remove('hidden'); }
-  else if(state.step===2){ next.textContent='Scoreaza tinuta'; next.disabled=!state.blob; next.classList.remove('hidden'); }
-  else { next.textContent='Analiza noua'; next.disabled=state.busy; next.classList.toggle('hidden', state.busy); }
+  const next = $('nextBtn'), back = $('backBtn');
+  back.classList.toggle('hidden', state.step===0 || state.busy);
+  next.classList.toggle('hidden', state.step===0 || (state.step===3 && state.busy));
+  if(state.step===1){ next.textContent='Continua'; next.disabled=!step1Valid(); }
+  else if(state.step===2){ next.textContent = state.mode==='ambele' ? 'Scoreaza look-ul' : 'Scoreaza'; next.disabled=!photosValid(); }
+  else if(state.step===3){ next.textContent='Analiza noua'; next.disabled=state.busy; }
 }
-$('nextBtn').onclick = ()=>{
+$('nextBtn').onclick = () => {
   if(state.step===1) go(2);
   else if(state.step===2){ go(3); analyze(); }
-  else resetAll();
+  else if(state.step===3) resetAll();
 };
-$('backBtn').onclick = ()=> go(state.step===3 ? 2 : 1);
+$('backBtn').onclick = () => go(state.step-1);
 
 function renderSummary(){
-  const a=state.answers;
-  const pills=[ocazieText(), a.evidenta.split(' - ')[0], a.dresscode, a.moment, a.sezon].filter(Boolean);
-  $('summary').innerHTML = pills.map(p=>`<span class="summary-pill">${esc(p)}</span>`).join('');
+  const c = state.answers.context;
+  const pills = [MODES[state.mode].map(m=>MODULES[m].titlu).join(' + '), ocazieText(), (c.evidenta||'').split(' - ')[0], c.moment, c.sezon].filter(Boolean);
+  $('summary').innerHTML = pills.map(p => `<span class="summary-pill">${esc(p)}</span>`).join('');
 }
 function resetAll(){
-  state.answers={}; state.blob=null;
-  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
-  ['tema','altaOcazie','detalii'].forEach(id=>$(id).value='');
+  state.mode=null; state.answers={context:{}, machiaj:{}, tinuta:{}};
+  document.querySelectorAll('.chip.on,.mode-card.on').forEach(c => c.classList.remove('on'));
+  ['tema','altaOcazie','detaliiMachiaj','detaliiTinuta'].forEach(id => $(id).value='');
   $('tema').classList.add('hidden'); $('altaOcazie').classList.add('hidden');
-  $('retake').click();
-  go(1);
+  clearSlot('fata'); clearSlot('corp');
+  go(0);
 }
 
-// ---------- AI (prin functia de pe server /api/analyze) ----------
+// ---------- AI (functia de pe server /api/analyze) ----------
 function blobToBase64(blob){
-  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); });
+  return new Promise((res,rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
 }
-const msgs = ['Citesc culorile, piesele si accesoriile','Verific potrivirea cu ocazia','Evaluez incaltamintea si proportiile','Caut variante de imbunatatire'];
-let controller = null;
-async function analyze(){
-  state.busy=true; refresh();
-  $('loading').classList.remove('hidden'); $('result').classList.add('hidden');
-  let mi=0; const t=setInterval(()=>{ mi=(mi+1)%msgs.length; $('loadMsg').textContent=msgs[mi]; }, 2600);
+async function img(slot){ const b = state.blobs[slot]; return { data: await blobToBase64(b), mediaType: b.type || 'image/jpeg' }; }
+
+async function callModule(modul){
+  const c = state.answers.context;
+  const context = { ocazie: ocazieText(), evidenta: c.evidenta, moment: c.moment, sezon: c.sezon };
+  let images;
+  if(modul==='tinuta') images = [await img('corp')];
+  else images = state.blobs.fata ? [await img('fata')].concat(state.blobs.corp ? [await img('corp')] : []) : [await img('corp')];
+  const payload = { modul, images, context,
+    tinuta: { ...state.answers.tinuta, detalii: $('detaliiTinuta').value.trim() },
+    machiaj: { ...state.answers.machiaj, detalii: $('detaliiMachiaj').value.trim() } };
+  const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 90000);
   try{
-    if(!navigator.onLine) throw {message:'Nu esti conectat la internet.'};
-    const a = state.answers;
-    const payload = {
-      image: await blobToBase64(state.blob),
-      mediaType: state.blob.type || 'image/jpeg',
-      answers: { ocazie: ocazieText(), evidenta: a.evidenta, dresscode: a.dresscode, moment: a.moment,
-                 sezon: a.sezon, sectiune: a.sectiune, buget: a.buget, detalii: $('detalii').value.trim() }
-    };
-    controller = new AbortController();
-    const to = setTimeout(()=>controller.abort(), 90000);
-    const res = await fetch('/api/analyze', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal });
+    const res = await fetch('/api/analyze', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload), signal: ctrl.signal });
     if(!res.ok){
-      clearTimeout(to);
       let m = 'Serverul a raspuns cu eroare ('+res.status+').';
-      if(res.status===429) m='Ai facut prea multe analize intr-un minut. Asteapta putin si reincearca.';
+      if(res.status===429) m = 'Prea multe analize intr-un minut. Asteapta putin si reincearca.';
       try{ const j = await res.json(); if(j && j.eroare) m = j.eroare; }catch(_){}
-      throw {message:m};
+      throw new Error(m);
     }
-    // citim raspunsul pe masura ce soseste
-    const reader = res.body.getReader(); const dec = new TextDecoder(); let text='';
-    while(true){ const {done,value} = await reader.read(); if(done) break; text += dec.decode(value,{stream:true}); }
-    clearTimeout(to);
-    const errIdx = text.indexOf('@@EROARE@@');
-    if(errIdx>=0) throw {message: text.slice(errIdx+10).trim()};
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let text = '';
+    while(true){ const {done, value} = await reader.read(); if(done) break; text += dec.decode(value, {stream:true}); }
+    const ei = text.indexOf('@@EROARE@@'); if(ei>=0) throw new Error(text.slice(ei+10).trim());
     const data = parseJSON(text);
-    if(!data) throw {message:'Raspunsul AI nu a putut fi interpretat. Incearca din nou.'};
-    if(data.eroare) throw {message: data.eroare};
-    renderResult(data);
+    if(!data) throw new Error('Raspunsul AI nu a putut fi interpretat.');
+    if(data.eroare) throw new Error(data.eroare);
+    if(modul==='machiaj' && !state.blobs.fata){
+      data.limitari_analiza = ['Nu ai adaugat portret: machiajul a fost evaluat din poza cu tinuta, cu precizie redusa.', data.limitari_analiza||''].join(' ').trim();
+    }
+    return data;
   }catch(e){
-    let m = e && e.message ? e.message : 'A aparut o eroare.';
-    if(e && e.name==='AbortError') m='Analiza a durat prea mult. Incearca din nou.';
-    $('result').innerHTML = `<div class="err"><b>Analiza nu a reusit.</b><br>${esc(m)}</div><button class="btn btn-ghost" style="margin-top:12px" onclick="go(3);analyze()">Reincearca</button>`;
+    if(e.name==='AbortError') throw new Error('Analiza a durat prea mult.');
+    throw e;
+  }finally{ clearTimeout(to); }
+}
+
+async function analyze(){
+  state.busy = true; refresh();
+  $('loading').classList.remove('hidden'); $('result').classList.add('hidden');
+  const allMsgs = mods().flatMap(m => MODULES[m].msgs);
+  let mi = 0; $('loadMsg').textContent = allMsgs[0];
+  const t = setInterval(() => { mi=(mi+1)%allMsgs.length; $('loadMsg').textContent = allMsgs[mi]; }, 2600);
+  try{
+    if(!navigator.onLine) throw new Error('Nu esti conectat la internet.');
+    const list = mods();
+    const settled = await Promise.allSettled(list.map(callModule));
+    const results = {};
+    list.forEach((m,i) => results[m] = settled[i].status==='fulfilled' ? {data: settled[i].value} : {error: settled[i].reason?.message || 'Eroare necunoscuta.'});
+    if(list.every(m => results[m].error)) throw new Error(results[list[0]].error);
+    renderResults(results);
+  }catch(e){
+    $('result').innerHTML = `<div class="err"><b>Analiza nu a reusit.</b><br>${esc(e.message||'A aparut o eroare.')}</div><button class="btn btn-ghost" style="margin-top:12px" onclick="go(3);analyze()">Reincearca</button>`;
     $('result').classList.remove('hidden');
   }finally{
     clearInterval(t); state.busy=false; $('loading').classList.add('hidden'); refresh();
@@ -395,104 +543,132 @@ async function analyze(){
 function parseJSON(txt){
   if(!txt) return null;
   const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
-  if(s<0||e<0) return null;
-  try { return JSON.parse(txt.slice(s,e+1)); } catch(_) { return null; }
+  if(s<0 || e<0) return null;
+  try{ return JSON.parse(txt.slice(s, e+1)); }catch(_){ return null; }
 }
 
-// Scor total calculat determinist in aplicatie: medie ponderata a criteriilor evaluabile, renormalizata
-function computeTotal(criterii){
-  let sw=0, sv=0; const excluded=[];
-  for(const k in WEIGHTS){
+// ---------- scor (calculat determinist in aplicatie) ----------
+function computeTotal(modul, criterii){
+  const W = MODULES[modul].weights; let sw=0, sv=0; const excluded=[];
+  for(const k in W){
     const c = criterii && criterii[k];
-    const sc = c && typeof c.scor==='number' && c.vizibil!==false ? Math.max(0,Math.min(10,c.scor)) : null;
-    if(sc===null){ excluded.push(CRIT_NAMES[k]); continue; }
-    sw += WEIGHTS[k]; sv += WEIGHTS[k]*sc;
+    const sc = c && typeof c.scor==='number' && c.vizibil!==false ? Math.max(0, Math.min(10, c.scor)) : null;
+    if(sc===null){ excluded.push(MODULES[modul].names[k]); continue; }
+    sw += W[k]; sv += W[k]*sc;
   }
   return { total: sw ? Math.round(sv/sw*10) : null, excluded, coverage: sw };
 }
-function colorFor(v10){ return v10>=7.5?'var(--good)':v10>=5?'var(--mid)':'var(--bad)'; }
-function label(t){ return t>=85?'Excelent':t>=70?'Foarte bine':t>=55?'Corect, dar perfectibil':t>=40?'Slab pentru context':'Nepotrivit'; }
+const colorFor = v10 => v10>=7.5 ? 'var(--good)' : v10>=5 ? 'var(--mid)' : 'var(--bad)';
+const label = t => t==null ? 'Neevaluat' : t>=85 ? 'Excelent' : t>=70 ? 'Foarte bine' : t>=55 ? 'Corect, dar perfectibil' : t>=40 ? 'Slab pentru context' : 'Nepotrivit';
 
-function ring(score){
-  const r=46, c=2*Math.PI*r, p=(score||0)/100;
-  const col = colorFor((score||0)/10);
-  return `<svg class="ring" width="112" height="112" viewBox="0 0 112 112">
-    <circle cx="56" cy="56" r="${r}" fill="none" stroke="var(--line)" stroke-width="10"/>
-    <circle cx="56" cy="56" r="${r}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"
-      stroke-dasharray="${c*p} ${c}" transform="rotate(-90 56 56)"/>
-    <text x="56" y="62" text-anchor="middle" font-size="30" fill="var(--ink)">${score ?? '-'}</text>
-    <text x="56" y="80" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="Inter">din 100</text>
+function ring(score, size=112){
+  const r = size*0.41, c = 2*Math.PI*r, p = (score||0)/100, mid = size/2;
+  return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${mid}" cy="${mid}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${size*0.09}"/>
+    <circle cx="${mid}" cy="${mid}" r="${r}" fill="none" stroke="${colorFor((score||0)/10)}" stroke-width="${size*0.09}" stroke-linecap="round"
+      stroke-dasharray="${c*p} ${c}" transform="rotate(-90 ${mid} ${mid})"/>
+    <text x="${mid}" y="${mid+size*0.055}" text-anchor="middle" font-size="${size*0.27}" fill="var(--ink)">${score ?? '-'}</text>
+    <text x="${mid}" y="${mid+size*0.21}" text-anchor="middle" font-size="${size*0.1}" fill="var(--muted)" font-family="Inter">din 100</text>
   </svg>`;
 }
+function swatches(d){
+  const hex = (d.paleta_hex||[]).filter(h => /^#[0-9a-fA-F]{6}$/.test(h)).slice(0,6); const names = d.paleta||[];
+  if(!hex.length) return '';
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' + hex.map((h,i) => `<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)"><i style="width:18px;height:18px;border-radius:50%;background:${h};border:1px solid var(--line);display:inline-block"></i>${esc(names[i]||'')}</span>`).join('') + '</div>';
+}
 
-function renderResult(d){
-  const {total, excluded, coverage} = computeTotal(d.criterii);
-  let h = '';
-  h += `<div class="card"><div class="score-hero">${ring(total)}<div>
-          <h2>${label(total)}</h2>
-          <p class="verdict">${esc(d.verdict||'')}</p></div></div>
-          <p class="muted" style="margin-top:10px">${esc(d.descriere_tinuta||'')}</p>${swatches(d)}
-        </div>`;
+function moduleSection(modul, res, showHeader){
+  const M = MODULES[modul];
+  if(res.error) return `<div class="card"><h2>${M.ico} ${M.titlu}</h2><div class="err" style="margin-top:8px">Aceasta parte nu a putut fi analizata: ${esc(res.error)}</div></div>`;
+  const d = res.data, {total, excluded, coverage} = computeTotal(modul, d.criterii);
+  res.total = total;
+  let h = `<div class="card">${showHeader?`<span class="muted">${M.ico} ${M.titlu}</span>`:''}
+      <div class="score-hero">${ring(total)}<div><h2>${label(total)}</h2><p class="verdict">${esc(d.verdict||'')}</p></div></div>
+      <p class="muted" style="margin-top:10px">${esc(d.descriere||'')}</p>${swatches(d)}</div>`;
   if(excluded.length || (d.limitari_analiza||'').trim()){
     h += `<div class="warn"><b>Limitari:</b> ${excluded.length?`nu s-a putut nota: ${esc(excluded.join(', '))} (scorul e calculat pe ${coverage}% din grila). `:''}${esc(d.limitari_analiza||'')}</div>`;
   }
-  // criterii
   h += `<div class="card"><h3 style="margin-bottom:6px">Detaliere scor</h3>`;
-  for(const k in WEIGHTS){
+  for(const k in M.weights){
     const c = (d.criterii||{})[k] || {};
     const na = typeof c.scor!=='number' || c.vizibil===false;
-    const v = na ? null : Math.max(0,Math.min(10,c.scor));
+    const v = na ? null : Math.max(0, Math.min(10, c.scor));
     h += `<div class="crit ${na?'na':''}">
-      <span class="name">${CRIT_NAMES[k]} <span class="muted" style="font-weight:400">· ${WEIGHTS[k]}%</span></span>
+      <span class="name">${M.names[k]} <span class="muted" style="font-weight:400">· ${M.weights[k]}%</span></span>
       <span class="val">${na?'n/a':v+'/10'}</span>
       <div class="meter"><i style="width:${na?0:v*10}%;background:${na?'transparent':colorFor(v)}"></i></div>
-      <span class="why">${esc(c.comentariu || (na?'Nu se vede in poza.':''))}</span>
-    </div>`;
+      <span class="why">${esc(c.comentariu || (na?'Nu se vede in poza.':''))}</span></div>`;
   }
   h += `</div>`;
-  // forte / slabe
-  const pf=(d.puncte_forte||[]), pi=(d.de_imbunatatit||[]);
-  if(pf.length||pi.length){
+  const pf = d.puncte_forte||[], pi = d.de_imbunatatit||[];
+  if(pf.length || pi.length){
     h += `<div class="card">`;
     if(pf.length) h += `<h3>Ce functioneaza</h3><ul class="list">${pf.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
     if(pi.length) h += `<h3 style="margin-top:10px">Ce trage scorul in jos</h3><ul class="list">${pi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
     h += `</div>`;
   }
-  // variante
-  const vars = (d.variante||[]).slice(0,3);
+  return h;
+}
+
+function renderResults(results){
+  const list = mods(), ambele = list.length > 1;
+  let sections = '';
+  // sectiunile se genereaza intai, ca sa avem scorurile
+  const order = ambele ? ['machiaj','tinuta'] : list;
+  order.forEach(m => sections += (ambele ? `<h2 style="margin:22px 0 10px">${MODULES[m].ico} ${MODULES[m].titlu}</h2>` : '') + moduleSection(m, results[m], false));
+
+  let h = '';
+  if(ambele){
+    const scores = order.map(m => results[m].total).filter(x => typeof x==='number');
+    const general = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+    h += `<div class="card"><span class="muted">✨ Look complet</span>
+      <div class="score-hero">${ring(general)}<div><h2>${label(general)}</h2>
+      <p class="verdict">${order.map(m => `${MODULES[m].titlu}: <b>${results[m].total ?? 'n/a'}</b>`).join(' · ')}</p></div></div>
+      ${scores.length<2?'<p class="muted" style="margin-top:8px">Scorul general include doar partea care a putut fi analizata.</p>':''}</div>`;
+  }
+  h += sections;
+
+  // variante: maxim 3 in total, ordonate dupa cresterea de scor
+  let vars = [];
+  order.forEach(m => {
+    const r = results[m]; if(!r.data) return;
+    (r.data.variante||[]).forEach(v => {
+      const est = typeof v.scor_estimat==='number' ? Math.round(Math.max(0, Math.min(100, v.scor_estimat))) : null;
+      vars.push({ ...v, modul:m, est, delta: est!=null && r.total!=null ? est - r.total : null });
+    });
+  });
+  vars.sort((a,b) => (b.delta??-999) - (a.delta??-999));
+  vars = vars.slice(0,3);
   if(vars.length){
-    h += `<div class="card"><h3>Variante de imbunatatire</h3><p class="muted">Maxim 3, ordonate dupa cresterea de scor.</p>`;
-    vars.forEach((v,i)=>{
-      let est = typeof v.scor_estimat==='number' ? Math.round(Math.max(0,Math.min(100,v.scor_estimat))) : null;
-      const delta = est!==null && total!==null ? est-total : null;
+    h += `<div class="card" style="margin-top:14px"><h3>Variante de imbunatatire</h3><p class="muted">Maxim 3, ordonate dupa cresterea de scor.</p>`;
+    vars.forEach((v,i) => {
+      const M = MODULES[v.modul];
       h += `<div class="variant"><div class="variant-head"><div>
-              <span class="muted">Varianta ${i+1}</span><h3>${esc(v.titlu||'')}</h3></div>
-              <div class="delta"><b>${est ?? '-'}</b>${delta!==null?`<small>${delta>=0?'+':''}${delta} puncte</small>`:''}</div></div>
-            <p style="font-size:15px;margin-top:6px">${esc(v.ce_schimbi||'')}</p>
-            <p class="muted">${esc(v.de_ce||'')}</p>`;
-      (v.piese||[]).forEach(p=>{
-        const q = encodeURIComponent(`${p.magazin||''} ${p.cautare||p.articol||''} ${state.answers.sectiune||''}`.trim());
+          <span class="muted">Varianta ${i+1}${ambele?` · ${M.ico} ${M.titlu}`:''}</span><h3>${esc(v.titlu||'')}</h3></div>
+          <div class="delta"><b>${v.est ?? '-'}</b>${v.delta!=null?`<small>${v.delta>=0?'+':''}${v.delta} puncte${ambele?'<br>'+esc(M.titlu.toLowerCase()):''}</small>`:''}</div></div>
+        <p style="font-size:15px;margin-top:6px">${esc(v.ce_schimbi||'')}</p><p class="muted">${esc(v.de_ce||'')}</p>`;
+      (v.elemente||v.piese||[]).forEach(p => {
+        const shop = (p.magazin||'').trim();
+        const extra = v.modul==='tinuta' ? (state.answers.tinuta.sectiune||'') : '';
+        const q = encodeURIComponent(`${shop} ${p.cautare||p.articol||''} ${extra}`.trim());
         h += `<div class="piece"><div><div class="p-name">${esc(p.articol||'')}</div><div class="p-desc">${esc(p.detalii||'')}</div></div>
-              <a class="shop" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Cauta la ${esc(p.magazin||'magazin')} ↗</a></div>`;
+          ${shop ? `<a class="shop" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Cauta la ${esc(shop)} ↗</a>` : `<span class="tag">Tehnica</span>`}</div>`;
       });
       h += `</div>`;
     });
-    h += `<p class="note">Scorul variantei este o estimare AI. Magazinele sunt alese dintr-o lista de retaileri prezenti in Romania; stocul, pretul si existenta exacta a produsului nu sunt verificate in timp real - linkul deschide o cautare.</p></div>`;
+    h += `<p class="note">Scorul variantei este o estimare AI pentru ${ambele?'partea respectiva (tinuta sau machiaj si coafura)':'aceasta evaluare'}. Magazinele sunt alese dintr-o lista de retaileri prezenti in Romania; stocul, pretul si existenta produsului nu sunt verificate in timp real - linkul deschide o cautare.</p></div>`;
   }
-  h += `<p class="note" style="text-align:center">Metoda: scor total = medie ponderata a criteriilor vizibile (colorit 25%, ocazie 25%, accesorii 15%, incaltaminte 15%, croiala 10%, obiectiv 10%). Evaluarea este subiectiva si orientativa.</p>`;
+
+  const metode = order.map(m => `${MODULES[m].titlu.toLowerCase()} = ` + Object.entries(MODULES[m].weights).map(([k,w]) => `${MODULES[m].names[k].toLowerCase()} ${w}%`).join(', ')).join('; ');
+  h += `<p class="note" style="text-align:center">Metoda: scor = medie ponderata a criteriilor vizibile (${esc(metode)}).${ambele?' Scorul general = media celor doua scoruri.':''} Evaluarea este subiectiva si orientativa.</p>`;
   $('result').innerHTML = h;
   $('result').classList.remove('hidden');
 }
 
-function swatches(d){
-  const hex=(d.paleta_hex||[]).filter(h=>/^#[0-9a-fA-F]{6}$/.test(h)).slice(0,6); const names=d.paleta||[];
-  if(!hex.length) return '';
-  return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+hex.map((h,i)=>`<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)"><i style="width:18px;height:18px;border-radius:50%;background:${h};border:1px solid var(--line);display:inline-block"></i>${esc(names[i]||'')}</span>`).join('')+'</div>';
-}
-function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function alertBox(m){ const d=document.createElement('div'); d.className='err'; d.style.marginTop='10px'; d.textContent=m; $('step2').appendChild(d); setTimeout(()=>d.remove(),5000); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(m){ const d = document.createElement('div'); d.className='err'; d.style.marginTop='10px'; d.textContent=m; $('step2').appendChild(d); setTimeout(() => d.remove(), 5000); }
 
-if('serviceWorker' in navigator){ window.addEventListener('load', ()=>navigator.serviceWorker.register('/sw.js').catch(()=>{})); }
+if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{})); }
 refresh();
 </script>
 </body>
